@@ -1,0 +1,52 @@
+
+import oneapp.common.Logger;
+import oneapp.common.SystemProps;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Date;
+import java.util.Properties;
+import javax.mail.*;
+
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+/**
+ * EmailUtil to send emails
+ */
+public class EmailUtil {
+    private final static String EMAIL_SMTP_HOST = "email.smtp.host";
+
+    /**
+     * @param recipientId - {@link String} recipient (to) emailId
+     * @param senderId - {@link String} sender (from) emailId
+     * sendEmail
+     */
+    public static void sendEmail(String recipientId, String senderId, String ccId, String subject, String body) {
+        try {
+            Properties properties = System.getProperties();
+            Properties commonProperties = SystemProps.getCommonProperties();
+            properties.setProperty("mail.smtp.host", commonProperties.getProperty(EMAIL_SMTP_HOST));
+            Session emailSession = Session.getDefaultInstance(properties);
+            MimeMessage emailMessage = new MimeMessage(emailSession);
+            emailMessage.setFrom(new InternetAddress(senderId));
+            emailMessage.addRecipients(Message.RecipientType.TO, getEmailAddress(recipientId));
+            emailMessage.addRecipients(Message.RecipientType.CC, getEmailAddress(ccId));
+            emailMessage.setSubject(subject);
+            emailMessage.setContent(body, "text/html");
+            emailMessage.setSentDate(new Date());
+            Transport.send(emailMessage);
+            Logger.success(" email sent successfully ");
+        } catch (MessagingException ex) {
+            Logger.fail(ex.getMessage());
+        }
+    }
+
+    private static InternetAddress[] getEmailAddress(String emailIds) throws AddressException {
+        if (StringUtils.isNotEmpty(emailIds)) {
+            return InternetAddress.parse(emailIds);
+        } else {
+            return null;
+        }
+    }
+}  
